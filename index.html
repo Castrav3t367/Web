@@ -2,11 +2,155 @@
 
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!--Documentation:
+  *style: .=classes    #=id    := a state 
+
+  
+  This is a 3D hover card effect that uses CSS variables and JavaScript to create a
+  dynamic tilt and glare effect when the user hovers over the card. The card tilts based 
+  on the mouse position, and a glare effect follows the mouse cursor. The code is structured 
+  with a grid container for perspective, a card element with CSS variables for rotation and
+  glare, and JavaScript event listeners to handle mouse interactions.
+  
+  
+  
+  -->
+  <title>3D Hover Card Study Notes</title>
+  <style>
+    body {
+      background-color: #090d16;
+      color: #f8fafc;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: system-ui, sans-serif;
+      margin: 0;
+    }
+
+    /* 1. 3D CAMERA CONTAINER */
+    .grid {
+      perspective: 1000px; /* Enables 3D depth for child cards */
+    }
+
+    /* 2. THE 3D TILT CARD */
+    .card {
+      --rx: 0deg;          /* X-axis tilt (up/down) */
+      --ry: 0deg;          /* Y-axis tilt (left/right) */
+      --px: 50%;           /* Glare X pixel coordinate */
+      --py: 50%;           /* Glare Y pixel coordinate */
+      --glare-opacity: 0;  /* Glare visibility (0 = hidden, 1 = visible) */
+
+      position: relative;
+      width: 320px;
+      padding: 2.2rem;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.05); /* here this 3 lines you can change the colors! */
+      border: 1px solid rgba(2, 25, 233, 0.15);
+      box-shadow: 0 25px 50px -12px rgba(206, 43, 43, 0.7);
+      cursor: pointer;
+      user-select: none;
+
+      transform-style: preserve-3d; /* Lets inner text float in 3D */
+      transform: rotateX(var(--rx)) rotateY(var(--ry));
+      transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .card.is-tilting {
+      transition: transform 0.08s ease-out; /* Fast tracking while hovering */
+    }
+
+    .card:active {
+      transform: rotateX(var(--rx)) rotateY(var(--ry)) scale(0.95); /* Click squash */
+    }
+
+    /* 3. SHINY GLARE SPOTLIGHT (where you put the mouse on the card) */
+    .card-glare {
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+      background: radial-gradient(
+        320px circle at var(--px) var(--py),
+        rgba(255, 255, 255, 0.25),
+        transparent 80%
+      );
+      opacity: var(--glare-opacity);
+      transition: opacity 0.3s ease;
+    }
+
+    /* 4. FLOATING 3D TEXT */
+    .card-content {
+      transform: translateZ(35px); /* Pops text 35px out toward the viewer */
+      pointer-events: none;
+    }
+
+    .card h3 {
+      margin: 0 0 0.5rem 0;
+      font-size: 1.5rem;
+    }
+
+    .card p {
+      margin: 0;
+      color: #94a3b8;
+      line-height: 1.5;
+    }
+  </style>
 </head>
 <body>
-    
+<!-- Create the card !!! -->
+  <div class="grid">
+    <div class="card">
+      <div class="card-glare"></div>
+      <div class="card-content">
+        <h3> Your title</h3>
+        <p>Here you can type whatever you want!Try to hover it and click!</p>
+      </div>
+    </div>
+  </div>
+
+  <script>//  now here in the script we will take care of the mouse movement and the tilt effect
+    const cards = document.querySelectorAll('.card');
+    const MAX_TILT = 18;
+
+    cards.forEach(card => {
+      card.addEventListener('mouseenter', () => {     // a loop trough all the cards and add event listeners for mouse enter, move, and leave
+        card.classList.add('is-tilting');
+        card.style.setProperty('--glare-opacity', '1');
+      });
+
+      card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();// get the card's position and size
+
+        // 1. Mouse pixel position inside the card
+        const px = e.clientX - rect.left;
+        const py = e.clientY - rect.top;
+
+        // 2. Normalized position from -0.5 to +0.5 (0 is center)
+        const percentX = (px / rect.width) - 0.5;
+        const percentY = (py / rect.height) - 0.5;
+
+        // 3. Calculate tilt angles in degrees
+        const rotateX = -(percentY * MAX_TILT * 2).toFixed(2);
+        const rotateY = (percentX * MAX_TILT * 2).toFixed(2);
+
+        // 4. Update CSS variables
+        card.style.setProperty('--px', `${px}px`);
+        card.style.setProperty('--py', `${py}px`);
+        card.style.setProperty('--rx', `${rotateX}deg`);
+        card.style.setProperty('--ry', `${rotateY}deg`);
+      });
+
+      card.addEventListener('mouseleave', () => {  //if the mouse leaves the card, reset the tilt and glare
+        card.classList.remove('is-tilting');
+        card.style.setProperty('--rx', '0deg');
+        card.style.setProperty('--ry', '0deg');
+        card.style.setProperty('--glare-opacity', '0');
+      });
+    });
+  </script>
+
 </body>
 </html>
